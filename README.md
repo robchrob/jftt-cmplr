@@ -27,4 +27,6 @@ cd simple-compiler
 
 ### Usage
 Compile and run on VM
+```bash
 python main.py program.gbl -o out.asm -r
+```
