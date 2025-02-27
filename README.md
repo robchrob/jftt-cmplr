@@ -22,6 +22,7 @@ A compiler for a simple imperative language that translates source code into opt
 ```bash
 git clone https://github.com/yourusername/simple-compiler.git
 cd simple-compiler
+```
 
 
 ### Usage
