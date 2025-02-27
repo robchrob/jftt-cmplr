@@ -18,14 +18,19 @@ class CodeGenerator:
         self.label_counter = 0
         self.labels = {}
 
-        # First allocate constants and variables to memory
+        # First allocate constants to memory
         for name in self.analyzer.const_table:
             self.memory_map[name] = self.next_memory
             self.next_memory += 1
 
+        # Allocate user variables to memory
         for name in self.analyzer.var_table:
             self.memory_map[name] = self.next_memory
             self.next_memory += 1
+
+        # Reserve 5 temporary memory locations after user variables
+        self.temp_start = self.next_memory
+        self.next_memory += 5  # Adjust based on maximum temps needed
 
     def get_new_label(self):
         label = f"L{self.label_counter}"
@@ -77,10 +82,10 @@ class CodeGenerator:
         # Use binary representation for efficient constant generation
         binary = bin(value)[2:]  # Remove '0b' prefix
 
-        self.emit("INC")  # Set a to 1
+        self.emit("INC")  # Set accumulator to 1
 
-        for bit in binary[1:]:  # Skip the first bit (already set a to 1)
-            self.emit("SHL")    # Double the value
+        for bit in binary[1:]:  # Skip the first bit (already set to 1)
+            self.emit("SHL")  # Double the value
             if bit == '1':
                 self.emit("INC")  # Add 1 if bit is set
 
@@ -93,20 +98,21 @@ class CodeGenerator:
 
         if isinstance(command, Assignment):
             self.generate_expression(command.expr)
+            # Store result to the correctly allocated user variable address
             self.emit("STORE", self.memory_map[command.name])
 
         elif isinstance(command, IfElse):
             end_label = self.get_new_label()
             else_label = self.get_new_label()
 
-            # Generate condition code
+            # Generate condition code, jumping to else label if condition fails
             self.generate_condition(command.condition, else_label)
 
-            # Generate then part
+            # Generate then part commands
             self.generate_commands(command.then_cmds)
             self.emit("JUMP", end_label)
 
-            # Generate else part
+            # Generate else part commands
             self.emit_label(else_label)
             self.generate_commands(command.else_cmds)
 
@@ -118,7 +124,7 @@ class CodeGenerator:
 
             self.emit_label(start_label)
 
-            # Generate condition code
+            # Generate the condition, jumping to end label if false
             self.generate_condition(command.condition, end_label)
 
             # Generate loop body
@@ -128,9 +134,11 @@ class CodeGenerator:
             self.emit_label(end_label)
 
         elif isinstance(command, Read):
+            # Read input into the variable's allocated address
             self.emit("SCAN", self.memory_map[command.name])
 
         elif isinstance(command, Write):
+            # Write output from the variable's allocated address
             self.emit("PRINT", self.memory_map[command.name])
 
     def generate_expression(self, expr):
@@ -145,6 +153,7 @@ class CodeGenerator:
 
         elif isinstance(expr, BinOp):
             if expr.op == '+':
+                # For simplicity, use LOAD and ADD for addition
                 self.emit("LOAD", self.memory_map[expr.left.name])
                 self.emit("ADD", self.memory_map[expr.right.name])
             elif expr.op == '-':
@@ -158,16 +167,19 @@ class CodeGenerator:
                 self.optimize_modulo(expr.left.name, expr.right.name)
 
     def optimize_multiplication(self, left, right):
-        """Optimize multiplication using binary method (Russian peasant algorithm)"""
-        result_addr = 0  # Use p[0] for result
-        a_addr = 1       # Use p[1] for a (multiplicand)
-        b_addr = 2       # Use p[2] for b (multiplier)
+        """Optimize multiplication using binary method (Russian peasant algorithm)
+        with reserved temporary memory.
+        """
+        # Use reserved temporary addresses
+        result_addr = self.temp_start       # Result storage
+        a_addr = self.temp_start + 1        # Multiplicand
+        b_addr = self.temp_start + 2        # Multiplier
 
         # Initialize result to 0
         self.emit("ZERO")
         self.emit("STORE", result_addr)
 
-        # Load operands
+        # Load operands from their memory locations
         self.emit("LOAD", self.memory_map[left])
         self.emit("STORE", a_addr)
         self.emit("LOAD", self.memory_map[right])
@@ -178,14 +190,14 @@ class CodeGenerator:
         odd_label = self.get_new_label()
         after_odd_label = self.get_new_label()
 
-        # Loop start
+        # Start loop for multiplication
         self.emit_label(start_label)
 
-        # Check if b is zero
+        # Check if b is zero; if yes, end loop
         self.emit("LOAD", b_addr)
         self.emit("JZ", end_label)
 
-        # Check if b is odd
+        # Check if b is odd; if so jump to odd_label
         self.emit("LOAD", b_addr)
         self.emit("JODD", odd_label)
         self.emit("JUMP", after_odd_label)
@@ -196,7 +208,7 @@ class CodeGenerator:
         self.emit("ADD", a_addr)
         self.emit("STORE", result_addr)
 
-        # Double a, halve b
+        # Continue with doubling a and halving b
         self.emit_label(after_odd_label)
         self.emit("LOAD", a_addr)
         self.emit("SHL")
@@ -208,21 +220,26 @@ class CodeGenerator:
         # Jump back to loop start
         self.emit("JUMP", start_label)
 
-        # End of loop
+        # End loop and load the multiplication result
         self.emit_label(end_label)
         self.emit("LOAD", result_addr)
 
     def optimize_division(self, left, right):
-        """Optimize division using binary long division algorithm"""
-        quotient_addr = 0    # Use p[0] for quotient
-        remainder_addr = 1   # Use p[1] for remainder (dividend)
-        divisor_addr = 2     # Use p[2] for divisor
+        """Optimize division using binary long division algorithm with
+        reserved temporary memory.
+        """
+        # Reserved addresses:
+        quotient_addr = self.temp_start       # quotient
+        remainder_addr = self.temp_start + 1    # remainder (dividend)
+        divisor_addr = self.temp_start + 2      # divisor
+        temp_addr = self.temp_start + 3         # temporary storage
+        count_addr = self.temp_start + 4        # shift counter
 
         # Initialize quotient to 0
         self.emit("ZERO")
         self.emit("STORE", quotient_addr)
 
-        # Load operands
+        # Load dividend and divisor operands
         self.emit("LOAD", self.memory_map[left])
         self.emit("STORE", remainder_addr)
         self.emit("LOAD", self.memory_map[right])
@@ -237,24 +254,20 @@ class CodeGenerator:
         self.emit("JZ", zero_div_label)
         self.emit("JUMP", normal_div_label)
 
-        # Handle division by zero: result is 0
+        # Handle division by zero: return 0 in remainder
         self.emit_label(zero_div_label)
         self.emit("ZERO")
         self.emit("STORE", remainder_addr)
         self.emit("JUMP", end_label)
 
-        # Normal division algorithm
+        # Proceed with normal division
         self.emit_label(normal_div_label)
 
-        # Using long division algorithm
-        temp_addr = 3  # Additional temporary storage
-        count_addr = 4  # For counting shifts
-
-        # Initialize the temporary variables
+        # Initialize temporary count to 0
         self.emit("ZERO")
         self.emit("STORE", count_addr)
 
-        # First, determine how many times to shift divisor
+        # Determine the number of left shifts needed for the divisor
         shift_start_label = self.get_new_label()
         shift_end_label = self.get_new_label()
 
@@ -263,12 +276,12 @@ class CodeGenerator:
         self.emit("SHL")
         self.emit("STORE", temp_addr)
 
-        # If shifted divisor > remainder, stop shifting
+        # If shifted divisor is exactly equal to remainder: stop shifting
         self.emit("LOAD", remainder_addr)
         self.emit("SUB", temp_addr)
         self.emit("JZ", shift_end_label)
 
-        # Check if we need to stop (if result is < 0)
+        # Check if subtraction result is positive (greater than 0)
         comp_label = self.get_new_label()
         self.emit("LOAD", remainder_addr)
         self.emit("SUB", temp_addr)
@@ -283,7 +296,7 @@ class CodeGenerator:
         self.emit("STORE", count_addr)
         self.emit("JUMP", shift_start_label)
 
-        # Now perform the division
+        # Division loop: perform subtraction and shift operations
         self.emit_label(shift_end_label)
         div_loop_label = self.get_new_label()
         div_end_label = self.get_new_label()
@@ -292,7 +305,7 @@ class CodeGenerator:
         self.emit("LOAD", count_addr)
         self.emit("JZ", div_end_label)
 
-        # Try to subtract
+        # Attempt subtraction: remainder - divisor
         self.emit("LOAD", remainder_addr)
         self.emit("SUB", divisor_addr)
         sub_possible_label = self.get_new_label()
@@ -301,50 +314,55 @@ class CodeGenerator:
         self.emit("JG", sub_possible_label)
         self.emit("JUMP", no_sub_label)
 
-        # Subtraction is possible, update remainder and quotient
+        # If subtraction is possible, update remainder and quotient (append 1)
         self.emit_label(sub_possible_label)
         self.emit("STORE", remainder_addr)
         self.emit("LOAD", quotient_addr)
         self.emit("SHL")
         self.emit("INC")
         self.emit("STORE", quotient_addr)
-        self.emit("JUMP", shift_divisor_label)
+        self.emit("JUMP", "shift_divisor_div")  # Jump to divisor shifting
 
-        # Subtraction not possible, just update quotient
+        # If subtraction is not possible, just update quotient (append 0)
         self.emit_label(no_sub_label)
         self.emit("LOAD", quotient_addr)
         self.emit("SHL")
         self.emit("STORE", quotient_addr)
 
-        # Shift divisor right
+        # Label for shifting the divisor right
         shift_divisor_label = self.get_new_label()
         self.emit_label(shift_divisor_label)
         self.emit("LOAD", divisor_addr)
         self.emit("SHR")
         self.emit("STORE", divisor_addr)
 
-        # Decrement counter and loop
+        # Decrement counter and loop back
         self.emit("LOAD", count_addr)
         self.emit("DEC")
         self.emit("STORE", count_addr)
         self.emit("JUMP", div_loop_label)
 
-        # End of division
         self.emit_label(div_end_label)
         self.emit_label(end_label)
+        # Load the quotient as the result for division
         self.emit("LOAD", quotient_addr)
 
     def optimize_modulo(self, left, right):
-        """Optimize modulo operation using the division algorithm"""
-        quotient_addr = 0    # Use p[0] for quotient (unused result)
-        remainder_addr = 1   # Use p[1] for remainder (result we want)
-        divisor_addr = 2     # Use p[2] for divisor
+        """Optimize modulo operation using the division algorithm and
+        reserved temporary memory.
+        """
+        # Reserved addresses (same as for division)
+        quotient_addr = self.temp_start       # quotient (unused for modulo)
+        remainder_addr = self.temp_start + 1    # remainder (result needed)
+        divisor_addr = self.temp_start + 2      # divisor
+        temp_addr = self.temp_start + 3         # temporary storage
+        count_addr = self.temp_start + 4        # shift counter
 
-        # Initialize quotient to 0
+        # Initialize quotient to 0 (though for modulo we only care about remainder)
         self.emit("ZERO")
         self.emit("STORE", quotient_addr)
 
-        # Load operands
+        # Load operands for the modulo operation
         self.emit("LOAD", self.memory_map[left])
         self.emit("STORE", remainder_addr)
         self.emit("LOAD", self.memory_map[right])
@@ -359,24 +377,20 @@ class CodeGenerator:
         self.emit("JZ", zero_div_label)
         self.emit("JUMP", normal_div_label)
 
-        # Handle division by zero: remainder is 0
+        # For division-by-zero, modulo is defined as 0
         self.emit_label(zero_div_label)
         self.emit("ZERO")
         self.emit("STORE", remainder_addr)
         self.emit("JUMP", end_label)
 
-        # Modulo algorithm (similar to division but we keep the remainder)
+        # Proceed with normal modulo calculation (similar to division)
         self.emit_label(normal_div_label)
 
-        # Using the same division algorithm but we'll return the remainder
-        temp_addr = 3
-        count_addr = 4
-
-        # Initialize the temporary variables
+        # Initialize shift counter to 0
         self.emit("ZERO")
         self.emit("STORE", count_addr)
 
-        # First, determine how many times to shift divisor
+        # Determine number of left shifts for the divisor
         shift_start_label = self.get_new_label()
         shift_end_label = self.get_new_label()
 
@@ -385,12 +399,10 @@ class CodeGenerator:
         self.emit("SHL")
         self.emit("STORE", temp_addr)
 
-        # If shifted divisor > remainder, stop shifting
         self.emit("LOAD", remainder_addr)
         self.emit("SUB", temp_addr)
         self.emit("JZ", shift_end_label)
 
-        # Check if we need to stop (if result is < 0)
         comp_label = self.get_new_label()
         self.emit("LOAD", remainder_addr)
         self.emit("SUB", temp_addr)
@@ -405,7 +417,7 @@ class CodeGenerator:
         self.emit("STORE", count_addr)
         self.emit("JUMP", shift_start_label)
 
-        # Now perform the division
+        # Modulo division loop
         self.emit_label(shift_end_label)
         div_loop_label = self.get_new_label()
         div_end_label = self.get_new_label()
@@ -414,7 +426,7 @@ class CodeGenerator:
         self.emit("LOAD", count_addr)
         self.emit("JZ", div_end_label)
 
-        # Try to subtract
+        # Try to subtract divisor from remainder
         self.emit("LOAD", remainder_addr)
         self.emit("SUB", divisor_addr)
         sub_possible_label = self.get_new_label()
@@ -423,44 +435,47 @@ class CodeGenerator:
         self.emit("JG", sub_possible_label)
         self.emit("JUMP", no_sub_label)
 
-        # Subtraction is possible, update remainder
+        # If subtraction is possible, update remainder
         self.emit_label(sub_possible_label)
         self.emit("STORE", remainder_addr)
-        # We don't care about the quotient for modulo
+        # We do not update quotient for modulo
 
-        # Shift divisor right regardless
+        # In all cases, shift the divisor right
         self.emit_label(no_sub_label)
         self.emit("LOAD", divisor_addr)
         self.emit("SHR")
         self.emit("STORE", divisor_addr)
 
-        # Decrement counter and loop
+        # Decrement the shift counter and repeat
         self.emit("LOAD", count_addr)
         self.emit("DEC")
         self.emit("STORE", count_addr)
         self.emit("JUMP", div_loop_label)
 
-        # End of modulo operation
         self.emit_label(div_end_label)
         self.emit_label(end_label)
-        # Load the remainder instead of quotient
+        # For modulo, the remainder is the final result
         self.emit("LOAD", remainder_addr)
 
     def generate_condition(self, condition, false_label):
-        """Generate code for conditional expressions"""
+        """Generate code for conditional expressions.
+
+        This implementation subtracts the second operand from the first
+        and then uses conditional jumps.
+        """
         left_name = condition.left.name
         right_name = condition.right.name
 
-        # Load first operand to accumulator
+        # Load the left operand into the accumulator
         self.emit("LOAD", self.memory_map[left_name])
 
         if condition.op == '==':
-            # a == b: Subtract b from a, jump if not zero
+            # For a == b, subtract b; if zero then condition is true.
             self.emit("SUB", self.memory_map[right_name])
             self.emit("JZ", false_label)
 
         elif condition.op == '!=':
-            # a != b: Subtract b from a, jump if zero
+            # a != b: subtract b; if zero, then jump to a temporary label
             self.emit("SUB", self.memory_map[right_name])
             temp = self.get_new_label()
             self.emit("JZ", temp)
@@ -468,24 +483,24 @@ class CodeGenerator:
             self.emit_label(temp)
 
         elif condition.op == '<':
-            # a < b: Subtract b from a, then add 1, jump if greater or equal
+            # For a < b, subtract b then adjust before comparing
             self.emit("SUB", self.memory_map[right_name])
-            self.emit("INC")  # To handle a - b < 0 as a - b + 1 <= 0
+            self.emit("INC")  # Adjust, so that a - b < 0 becomes <= 0
             self.emit("JG", false_label)
 
         elif condition.op == '>':
-            # a > b: Subtract b from a, jump if less than or equal
+            # For a > b, subtract b and jump if equal or greater (not >)
             self.emit("SUB", self.memory_map[right_name])
-            self.emit("JZ", false_label)  # If a - b = 0 then a = b, so not a > b
-            self.emit("JG", false_label)  # If a - b > 0 then a < b, so not a > b
+            self.emit("JZ", false_label)
+            self.emit("JG", false_label)
 
         elif condition.op == '<=':
-            # a <= b: Subtract b from a, jump if greater
+            # For a <= b, subtract b and jump if result is positive (i.e., > 0)
             self.emit("SUB", self.memory_map[right_name])
             self.emit("JG", false_label)
 
         elif condition.op == '>=':
-            # a >= b: Subtract b from a, jump if less than
+            # For a >= b, subtract b and jump if result is negative
             self.emit("SUB", self.memory_map[right_name])
             temp = self.get_new_label()
             self.emit("JZ", temp)
