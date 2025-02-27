@@ -1,0 +1,19 @@
+CONST
+one := 1
+two := 2
+VAR
+n
+m
+reszta
+potega
+dzielnik
+BEGIN
+  READ n;
+  dzielnik := two;
+  WHILE dzielnik <= n DO
+    m := dzielnik * dzielnik;
+    WRITE m;
+    dzielnik := dzielnik + one;
+  END
+END
+

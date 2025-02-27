@@ -23,3 +23,7 @@ A compiler for a simple imperative language that translates source code into opt
 git clone https://github.com/yourusername/simple-compiler.git
 cd simple-compiler
 
+
+### Usage
+Compile and run on VM
+python main.py program.gbl -o out.asm -r
