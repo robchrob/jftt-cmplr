@@ -1,0 +1,712 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> program
+Rule 1     program -> CONST cdeclarations VAR vdeclarations BEGIN commands END
+Rule 2     cdeclarations -> <empty>
+Rule 3     cdeclarations -> cdeclarations IDENTIFIER ASSIGN NUMBER
+Rule 4     vdeclarations -> <empty>
+Rule 5     vdeclarations -> vdeclarations IDENTIFIER
+Rule 6     commands -> commands command
+Rule 7     commands -> command
+Rule 8     command -> IDENTIFIER ASSIGN expression SEMICOLON
+Rule 9     command -> IF condition THEN commands ELSE commands END
+Rule 10    command -> WHILE condition DO commands END
+Rule 11    command -> READ IDENTIFIER SEMICOLON
+Rule 12    command -> WRITE IDENTIFIER SEMICOLON
+Rule 13    expression -> NUMBER
+Rule 14    expression -> IDENTIFIER
+Rule 15    expression -> IDENTIFIER PLUS IDENTIFIER
+Rule 16    expression -> IDENTIFIER MINUS IDENTIFIER
+Rule 17    expression -> IDENTIFIER TIMES IDENTIFIER
+Rule 18    expression -> IDENTIFIER DIVIDE IDENTIFIER
+Rule 19    expression -> IDENTIFIER MODULO IDENTIFIER
+Rule 20    condition -> IDENTIFIER EQUAL IDENTIFIER
+Rule 21    condition -> IDENTIFIER NOTEQUAL IDENTIFIER
+Rule 22    condition -> IDENTIFIER LESS IDENTIFIER
+Rule 23    condition -> IDENTIFIER GREATER IDENTIFIER
+Rule 24    condition -> IDENTIFIER LESSEQUAL IDENTIFIER
+Rule 25    condition -> IDENTIFIER GREATEREQUAL IDENTIFIER
+
+Terminals, with rules where they appear
+
+ASSIGN               : 3 8
+BEGIN                : 1
+CONST                : 1
+DIVIDE               : 18
+DO                   : 10
+ELSE                 : 9
+END                  : 1 9 10
+EQUAL                : 20
+GREATER              : 23
+GREATEREQUAL         : 25
+IDENTIFIER           : 3 5 8 11 12 14 15 15 16 16 17 17 18 18 19 19 20 20 21 21 22 22 23 23 24 24 25 25
+IF                   : 9
+LESS                 : 22
+LESSEQUAL            : 24
+MINUS                : 16
+MODULO               : 19
+NOTEQUAL             : 21
+NUMBER               : 3 13
+PLUS                 : 15
+READ                 : 11
+SEMICOLON            : 8 11 12
+THEN                 : 9
+TIMES                : 17
+VAR                  : 1
+WHILE                : 10
+WRITE                : 12
+error                : 
+
+Nonterminals, with rules where they appear
+
+cdeclarations        : 1 3
+command              : 6 7
+commands             : 1 6 9 9 10
+condition            : 9 10
+expression           : 8
+program              : 0
+vdeclarations        : 1 5
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . program
+    (1) program -> . CONST cdeclarations VAR vdeclarations BEGIN commands END
+
+    CONST           shift and go to state 2
+
+    program                        shift and go to state 1
+
+state 1
+
+    (0) S' -> program .
+
+
+
+state 2
+
+    (1) program -> CONST . cdeclarations VAR vdeclarations BEGIN commands END
+    (2) cdeclarations -> .
+    (3) cdeclarations -> . cdeclarations IDENTIFIER ASSIGN NUMBER
+
+    VAR             reduce using rule 2 (cdeclarations -> .)
+    IDENTIFIER      reduce using rule 2 (cdeclarations -> .)
+
+    cdeclarations                  shift and go to state 3
+
+state 3
+
+    (1) program -> CONST cdeclarations . VAR vdeclarations BEGIN commands END
+    (3) cdeclarations -> cdeclarations . IDENTIFIER ASSIGN NUMBER
+
+    VAR             shift and go to state 4
+    IDENTIFIER      shift and go to state 5
+
+
+state 4
+
+    (1) program -> CONST cdeclarations VAR . vdeclarations BEGIN commands END
+    (4) vdeclarations -> .
+    (5) vdeclarations -> . vdeclarations IDENTIFIER
+
+    BEGIN           reduce using rule 4 (vdeclarations -> .)
+    IDENTIFIER      reduce using rule 4 (vdeclarations -> .)
+
+    vdeclarations                  shift and go to state 6
+
+state 5
+
+    (3) cdeclarations -> cdeclarations IDENTIFIER . ASSIGN NUMBER
+
+    ASSIGN          shift and go to state 7
+
+
+state 6
+
+    (1) program -> CONST cdeclarations VAR vdeclarations . BEGIN commands END
+    (5) vdeclarations -> vdeclarations . IDENTIFIER
+
+    BEGIN           shift and go to state 8
+    IDENTIFIER      shift and go to state 9
+
+
+state 7
+
+    (3) cdeclarations -> cdeclarations IDENTIFIER ASSIGN . NUMBER
+
+    NUMBER          shift and go to state 10
+
+
+state 8
+
+    (1) program -> CONST cdeclarations VAR vdeclarations BEGIN . commands END
+    (6) commands -> . commands command
+    (7) commands -> . command
+    (8) command -> . IDENTIFIER ASSIGN expression SEMICOLON
+    (9) command -> . IF condition THEN commands ELSE commands END
+    (10) command -> . WHILE condition DO commands END
+    (11) command -> . READ IDENTIFIER SEMICOLON
+    (12) command -> . WRITE IDENTIFIER SEMICOLON
+
+    IDENTIFIER      shift and go to state 13
+    IF              shift and go to state 14
+    WHILE           shift and go to state 15
+    READ            shift and go to state 16
+    WRITE           shift and go to state 17
+
+    commands                       shift and go to state 11
+    command                        shift and go to state 12
+
+state 9
+
+    (5) vdeclarations -> vdeclarations IDENTIFIER .
+
+    BEGIN           reduce using rule 5 (vdeclarations -> vdeclarations IDENTIFIER .)
+    IDENTIFIER      reduce using rule 5 (vdeclarations -> vdeclarations IDENTIFIER .)
+
+
+state 10
+
+    (3) cdeclarations -> cdeclarations IDENTIFIER ASSIGN NUMBER .
+
+    VAR             reduce using rule 3 (cdeclarations -> cdeclarations IDENTIFIER ASSIGN NUMBER .)
+    IDENTIFIER      reduce using rule 3 (cdeclarations -> cdeclarations IDENTIFIER ASSIGN NUMBER .)
+
+
+state 11
+
+    (1) program -> CONST cdeclarations VAR vdeclarations BEGIN commands . END
+    (6) commands -> commands . command
+    (8) command -> . IDENTIFIER ASSIGN expression SEMICOLON
+    (9) command -> . IF condition THEN commands ELSE commands END
+    (10) command -> . WHILE condition DO commands END
+    (11) command -> . READ IDENTIFIER SEMICOLON
+    (12) command -> . WRITE IDENTIFIER SEMICOLON
+
+    END             shift and go to state 18
+    IDENTIFIER      shift and go to state 13
+    IF              shift and go to state 14
+    WHILE           shift and go to state 15
+    READ            shift and go to state 16
+    WRITE           shift and go to state 17
+
+    command                        shift and go to state 19
+
+state 12
+
+    (7) commands -> command .
+
+    END             reduce using rule 7 (commands -> command .)
+    IDENTIFIER      reduce using rule 7 (commands -> command .)
+    IF              reduce using rule 7 (commands -> command .)
+    WHILE           reduce using rule 7 (commands -> command .)
+    READ            reduce using rule 7 (commands -> command .)
+    WRITE           reduce using rule 7 (commands -> command .)
+    ELSE            reduce using rule 7 (commands -> command .)
+
+
+state 13
+
+    (8) command -> IDENTIFIER . ASSIGN expression SEMICOLON
+
+    ASSIGN          shift and go to state 20
+
+
+state 14
+
+    (9) command -> IF . condition THEN commands ELSE commands END
+    (20) condition -> . IDENTIFIER EQUAL IDENTIFIER
+    (21) condition -> . IDENTIFIER NOTEQUAL IDENTIFIER
+    (22) condition -> . IDENTIFIER LESS IDENTIFIER
+    (23) condition -> . IDENTIFIER GREATER IDENTIFIER
+    (24) condition -> . IDENTIFIER LESSEQUAL IDENTIFIER
+    (25) condition -> . IDENTIFIER GREATEREQUAL IDENTIFIER
+
+    IDENTIFIER      shift and go to state 22
+
+    condition                      shift and go to state 21
+
+state 15
+
+    (10) command -> WHILE . condition DO commands END
+    (20) condition -> . IDENTIFIER EQUAL IDENTIFIER
+    (21) condition -> . IDENTIFIER NOTEQUAL IDENTIFIER
+    (22) condition -> . IDENTIFIER LESS IDENTIFIER
+    (23) condition -> . IDENTIFIER GREATER IDENTIFIER
+    (24) condition -> . IDENTIFIER LESSEQUAL IDENTIFIER
+    (25) condition -> . IDENTIFIER GREATEREQUAL IDENTIFIER
+
+    IDENTIFIER      shift and go to state 22
+
+    condition                      shift and go to state 23
+
+state 16
+
+    (11) command -> READ . IDENTIFIER SEMICOLON
+
+    IDENTIFIER      shift and go to state 24
+
+
+state 17
+
+    (12) command -> WRITE . IDENTIFIER SEMICOLON
+
+    IDENTIFIER      shift and go to state 25
+
+
+state 18
+
+    (1) program -> CONST cdeclarations VAR vdeclarations BEGIN commands END .
+
+    $end            reduce using rule 1 (program -> CONST cdeclarations VAR vdeclarations BEGIN commands END .)
+
+
+state 19
+
+    (6) commands -> commands command .
+
+    END             reduce using rule 6 (commands -> commands command .)
+    IDENTIFIER      reduce using rule 6 (commands -> commands command .)
+    IF              reduce using rule 6 (commands -> commands command .)
+    WHILE           reduce using rule 6 (commands -> commands command .)
+    READ            reduce using rule 6 (commands -> commands command .)
+    WRITE           reduce using rule 6 (commands -> commands command .)
+    ELSE            reduce using rule 6 (commands -> commands command .)
+
+
+state 20
+
+    (8) command -> IDENTIFIER ASSIGN . expression SEMICOLON
+    (13) expression -> . NUMBER
+    (14) expression -> . IDENTIFIER
+    (15) expression -> . IDENTIFIER PLUS IDENTIFIER
+    (16) expression -> . IDENTIFIER MINUS IDENTIFIER
+    (17) expression -> . IDENTIFIER TIMES IDENTIFIER
+    (18) expression -> . IDENTIFIER DIVIDE IDENTIFIER
+    (19) expression -> . IDENTIFIER MODULO IDENTIFIER
+
+    NUMBER          shift and go to state 28
+    IDENTIFIER      shift and go to state 26
+
+    expression                     shift and go to state 27
+
+state 21
+
+    (9) command -> IF condition . THEN commands ELSE commands END
+
+    THEN            shift and go to state 29
+
+
+state 22
+
+    (20) condition -> IDENTIFIER . EQUAL IDENTIFIER
+    (21) condition -> IDENTIFIER . NOTEQUAL IDENTIFIER
+    (22) condition -> IDENTIFIER . LESS IDENTIFIER
+    (23) condition -> IDENTIFIER . GREATER IDENTIFIER
+    (24) condition -> IDENTIFIER . LESSEQUAL IDENTIFIER
+    (25) condition -> IDENTIFIER . GREATEREQUAL IDENTIFIER
+
+    EQUAL           shift and go to state 30
+    NOTEQUAL        shift and go to state 31
+    LESS            shift and go to state 32
+    GREATER         shift and go to state 33
+    LESSEQUAL       shift and go to state 34
+    GREATEREQUAL    shift and go to state 35
+
+
+state 23
+
+    (10) command -> WHILE condition . DO commands END
+
+    DO              shift and go to state 36
+
+
+state 24
+
+    (11) command -> READ IDENTIFIER . SEMICOLON
+
+    SEMICOLON       shift and go to state 37
+
+
+state 25
+
+    (12) command -> WRITE IDENTIFIER . SEMICOLON
+
+    SEMICOLON       shift and go to state 38
+
+
+state 26
+
+    (14) expression -> IDENTIFIER .
+    (15) expression -> IDENTIFIER . PLUS IDENTIFIER
+    (16) expression -> IDENTIFIER . MINUS IDENTIFIER
+    (17) expression -> IDENTIFIER . TIMES IDENTIFIER
+    (18) expression -> IDENTIFIER . DIVIDE IDENTIFIER
+    (19) expression -> IDENTIFIER . MODULO IDENTIFIER
+
+    SEMICOLON       reduce using rule 14 (expression -> IDENTIFIER .)
+    PLUS            shift and go to state 39
+    MINUS           shift and go to state 40
+    TIMES           shift and go to state 41
+    DIVIDE          shift and go to state 42
+    MODULO          shift and go to state 43
+
+
+state 27
+
+    (8) command -> IDENTIFIER ASSIGN expression . SEMICOLON
+
+    SEMICOLON       shift and go to state 44
+
+
+state 28
+
+    (13) expression -> NUMBER .
+
+    SEMICOLON       reduce using rule 13 (expression -> NUMBER .)
+
+
+state 29
+
+    (9) command -> IF condition THEN . commands ELSE commands END
+    (6) commands -> . commands command
+    (7) commands -> . command
+    (8) command -> . IDENTIFIER ASSIGN expression SEMICOLON
+    (9) command -> . IF condition THEN commands ELSE commands END
+    (10) command -> . WHILE condition DO commands END
+    (11) command -> . READ IDENTIFIER SEMICOLON
+    (12) command -> . WRITE IDENTIFIER SEMICOLON
+
+    IDENTIFIER      shift and go to state 13
+    IF              shift and go to state 14
+    WHILE           shift and go to state 15
+    READ            shift and go to state 16
+    WRITE           shift and go to state 17
+
+    commands                       shift and go to state 45
+    command                        shift and go to state 12
+
+state 30
+
+    (20) condition -> IDENTIFIER EQUAL . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 46
+
+
+state 31
+
+    (21) condition -> IDENTIFIER NOTEQUAL . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 47
+
+
+state 32
+
+    (22) condition -> IDENTIFIER LESS . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 48
+
+
+state 33
+
+    (23) condition -> IDENTIFIER GREATER . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 49
+
+
+state 34
+
+    (24) condition -> IDENTIFIER LESSEQUAL . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 50
+
+
+state 35
+
+    (25) condition -> IDENTIFIER GREATEREQUAL . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 51
+
+
+state 36
+
+    (10) command -> WHILE condition DO . commands END
+    (6) commands -> . commands command
+    (7) commands -> . command
+    (8) command -> . IDENTIFIER ASSIGN expression SEMICOLON
+    (9) command -> . IF condition THEN commands ELSE commands END
+    (10) command -> . WHILE condition DO commands END
+    (11) command -> . READ IDENTIFIER SEMICOLON
+    (12) command -> . WRITE IDENTIFIER SEMICOLON
+
+    IDENTIFIER      shift and go to state 13
+    IF              shift and go to state 14
+    WHILE           shift and go to state 15
+    READ            shift and go to state 16
+    WRITE           shift and go to state 17
+
+    commands                       shift and go to state 52
+    command                        shift and go to state 12
+
+state 37
+
+    (11) command -> READ IDENTIFIER SEMICOLON .
+
+    END             reduce using rule 11 (command -> READ IDENTIFIER SEMICOLON .)
+    IDENTIFIER      reduce using rule 11 (command -> READ IDENTIFIER SEMICOLON .)
+    IF              reduce using rule 11 (command -> READ IDENTIFIER SEMICOLON .)
+    WHILE           reduce using rule 11 (command -> READ IDENTIFIER SEMICOLON .)
+    READ            reduce using rule 11 (command -> READ IDENTIFIER SEMICOLON .)
+    WRITE           reduce using rule 11 (command -> READ IDENTIFIER SEMICOLON .)
+    ELSE            reduce using rule 11 (command -> READ IDENTIFIER SEMICOLON .)
+
+
+state 38
+
+    (12) command -> WRITE IDENTIFIER SEMICOLON .
+
+    END             reduce using rule 12 (command -> WRITE IDENTIFIER SEMICOLON .)
+    IDENTIFIER      reduce using rule 12 (command -> WRITE IDENTIFIER SEMICOLON .)
+    IF              reduce using rule 12 (command -> WRITE IDENTIFIER SEMICOLON .)
+    WHILE           reduce using rule 12 (command -> WRITE IDENTIFIER SEMICOLON .)
+    READ            reduce using rule 12 (command -> WRITE IDENTIFIER SEMICOLON .)
+    WRITE           reduce using rule 12 (command -> WRITE IDENTIFIER SEMICOLON .)
+    ELSE            reduce using rule 12 (command -> WRITE IDENTIFIER SEMICOLON .)
+
+
+state 39
+
+    (15) expression -> IDENTIFIER PLUS . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 53
+
+
+state 40
+
+    (16) expression -> IDENTIFIER MINUS . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 54
+
+
+state 41
+
+    (17) expression -> IDENTIFIER TIMES . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 55
+
+
+state 42
+
+    (18) expression -> IDENTIFIER DIVIDE . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 56
+
+
+state 43
+
+    (19) expression -> IDENTIFIER MODULO . IDENTIFIER
+
+    IDENTIFIER      shift and go to state 57
+
+
+state 44
+
+    (8) command -> IDENTIFIER ASSIGN expression SEMICOLON .
+
+    END             reduce using rule 8 (command -> IDENTIFIER ASSIGN expression SEMICOLON .)
+    IDENTIFIER      reduce using rule 8 (command -> IDENTIFIER ASSIGN expression SEMICOLON .)
+    IF              reduce using rule 8 (command -> IDENTIFIER ASSIGN expression SEMICOLON .)
+    WHILE           reduce using rule 8 (command -> IDENTIFIER ASSIGN expression SEMICOLON .)
+    READ            reduce using rule 8 (command -> IDENTIFIER ASSIGN expression SEMICOLON .)
+    WRITE           reduce using rule 8 (command -> IDENTIFIER ASSIGN expression SEMICOLON .)
+    ELSE            reduce using rule 8 (command -> IDENTIFIER ASSIGN expression SEMICOLON .)
+
+
+state 45
+
+    (9) command -> IF condition THEN commands . ELSE commands END
+    (6) commands -> commands . command
+    (8) command -> . IDENTIFIER ASSIGN expression SEMICOLON
+    (9) command -> . IF condition THEN commands ELSE commands END
+    (10) command -> . WHILE condition DO commands END
+    (11) command -> . READ IDENTIFIER SEMICOLON
+    (12) command -> . WRITE IDENTIFIER SEMICOLON
+
+    ELSE            shift and go to state 58
+    IDENTIFIER      shift and go to state 13
+    IF              shift and go to state 14
+    WHILE           shift and go to state 15
+    READ            shift and go to state 16
+    WRITE           shift and go to state 17
+
+    command                        shift and go to state 19
+
+state 46
+
+    (20) condition -> IDENTIFIER EQUAL IDENTIFIER .
+
+    THEN            reduce using rule 20 (condition -> IDENTIFIER EQUAL IDENTIFIER .)
+    DO              reduce using rule 20 (condition -> IDENTIFIER EQUAL IDENTIFIER .)
+
+
+state 47
+
+    (21) condition -> IDENTIFIER NOTEQUAL IDENTIFIER .
+
+    THEN            reduce using rule 21 (condition -> IDENTIFIER NOTEQUAL IDENTIFIER .)
+    DO              reduce using rule 21 (condition -> IDENTIFIER NOTEQUAL IDENTIFIER .)
+
+
+state 48
+
+    (22) condition -> IDENTIFIER LESS IDENTIFIER .
+
+    THEN            reduce using rule 22 (condition -> IDENTIFIER LESS IDENTIFIER .)
+    DO              reduce using rule 22 (condition -> IDENTIFIER LESS IDENTIFIER .)
+
+
+state 49
+
+    (23) condition -> IDENTIFIER GREATER IDENTIFIER .
+
+    THEN            reduce using rule 23 (condition -> IDENTIFIER GREATER IDENTIFIER .)
+    DO              reduce using rule 23 (condition -> IDENTIFIER GREATER IDENTIFIER .)
+
+
+state 50
+
+    (24) condition -> IDENTIFIER LESSEQUAL IDENTIFIER .
+
+    THEN            reduce using rule 24 (condition -> IDENTIFIER LESSEQUAL IDENTIFIER .)
+    DO              reduce using rule 24 (condition -> IDENTIFIER LESSEQUAL IDENTIFIER .)
+
+
+state 51
+
+    (25) condition -> IDENTIFIER GREATEREQUAL IDENTIFIER .
+
+    THEN            reduce using rule 25 (condition -> IDENTIFIER GREATEREQUAL IDENTIFIER .)
+    DO              reduce using rule 25 (condition -> IDENTIFIER GREATEREQUAL IDENTIFIER .)
+
+
+state 52
+
+    (10) command -> WHILE condition DO commands . END
+    (6) commands -> commands . command
+    (8) command -> . IDENTIFIER ASSIGN expression SEMICOLON
+    (9) command -> . IF condition THEN commands ELSE commands END
+    (10) command -> . WHILE condition DO commands END
+    (11) command -> . READ IDENTIFIER SEMICOLON
+    (12) command -> . WRITE IDENTIFIER SEMICOLON
+
+    END             shift and go to state 59
+    IDENTIFIER      shift and go to state 13
+    IF              shift and go to state 14
+    WHILE           shift and go to state 15
+    READ            shift and go to state 16
+    WRITE           shift and go to state 17
+
+    command                        shift and go to state 19
+
+state 53
+
+    (15) expression -> IDENTIFIER PLUS IDENTIFIER .
+
+    SEMICOLON       reduce using rule 15 (expression -> IDENTIFIER PLUS IDENTIFIER .)
+
+
+state 54
+
+    (16) expression -> IDENTIFIER MINUS IDENTIFIER .
+
+    SEMICOLON       reduce using rule 16 (expression -> IDENTIFIER MINUS IDENTIFIER .)
+
+
+state 55
+
+    (17) expression -> IDENTIFIER TIMES IDENTIFIER .
+
+    SEMICOLON       reduce using rule 17 (expression -> IDENTIFIER TIMES IDENTIFIER .)
+
+
+state 56
+
+    (18) expression -> IDENTIFIER DIVIDE IDENTIFIER .
+
+    SEMICOLON       reduce using rule 18 (expression -> IDENTIFIER DIVIDE IDENTIFIER .)
+
+
+state 57
+
+    (19) expression -> IDENTIFIER MODULO IDENTIFIER .
+
+    SEMICOLON       reduce using rule 19 (expression -> IDENTIFIER MODULO IDENTIFIER .)
+
+
+state 58
+
+    (9) command -> IF condition THEN commands ELSE . commands END
+    (6) commands -> . commands command
+    (7) commands -> . command
+    (8) command -> . IDENTIFIER ASSIGN expression SEMICOLON
+    (9) command -> . IF condition THEN commands ELSE commands END
+    (10) command -> . WHILE condition DO commands END
+    (11) command -> . READ IDENTIFIER SEMICOLON
+    (12) command -> . WRITE IDENTIFIER SEMICOLON
+
+    IDENTIFIER      shift and go to state 13
+    IF              shift and go to state 14
+    WHILE           shift and go to state 15
+    READ            shift and go to state 16
+    WRITE           shift and go to state 17
+
+    commands                       shift and go to state 60
+    command                        shift and go to state 12
+
+state 59
+
+    (10) command -> WHILE condition DO commands END .
+
+    END             reduce using rule 10 (command -> WHILE condition DO commands END .)
+    IDENTIFIER      reduce using rule 10 (command -> WHILE condition DO commands END .)
+    IF              reduce using rule 10 (command -> WHILE condition DO commands END .)
+    WHILE           reduce using rule 10 (command -> WHILE condition DO commands END .)
+    READ            reduce using rule 10 (command -> WHILE condition DO commands END .)
+    WRITE           reduce using rule 10 (command -> WHILE condition DO commands END .)
+    ELSE            reduce using rule 10 (command -> WHILE condition DO commands END .)
+
+
+state 60
+
+    (9) command -> IF condition THEN commands ELSE commands . END
+    (6) commands -> commands . command
+    (8) command -> . IDENTIFIER ASSIGN expression SEMICOLON
+    (9) command -> . IF condition THEN commands ELSE commands END
+    (10) command -> . WHILE condition DO commands END
+    (11) command -> . READ IDENTIFIER SEMICOLON
+    (12) command -> . WRITE IDENTIFIER SEMICOLON
+
+    END             shift and go to state 61
+    IDENTIFIER      shift and go to state 13
+    IF              shift and go to state 14
+    WHILE           shift and go to state 15
+    READ            shift and go to state 16
+    WRITE           shift and go to state 17
+
+    command                        shift and go to state 19
+
+state 61
+
+    (9) command -> IF condition THEN commands ELSE commands END .
+
+    END             reduce using rule 9 (command -> IF condition THEN commands ELSE commands END .)
+    IDENTIFIER      reduce using rule 9 (command -> IF condition THEN commands ELSE commands END .)
+    IF              reduce using rule 9 (command -> IF condition THEN commands ELSE commands END .)
+    WHILE           reduce using rule 9 (command -> IF condition THEN commands ELSE commands END .)
+    READ            reduce using rule 9 (command -> IF condition THEN commands ELSE commands END .)
+    WRITE           reduce using rule 9 (command -> IF condition THEN commands ELSE commands END .)
+    ELSE            reduce using rule 9 (command -> IF condition THEN commands ELSE commands END .)
+
